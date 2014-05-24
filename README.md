@@ -1,5 +1,5 @@
 <h1>SOPIA_Suite</h1>
-<h1>===========</h1>
+===========
 
 A suite of digital forensic tools written in Python.
 
