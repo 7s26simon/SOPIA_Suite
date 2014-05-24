@@ -17,14 +17,14 @@ SIPHON parses a Windows.edb file using Libesedb and then parses the results of t
 
 <h1>DEPENDANCIES</h1>
 
-SOPIA Suite has a number of dependencies which need to be met before useage:
+SOPIA Suite has a number of dependencies which need to be met before usage:
 
 Python 2.7 (Add C:\Python27 to 'PATH' in the Environmental Variables tab on Windows to get Python working the command line).
 libesedb (Built from source)
 tkinter
 Pyexiv 2.7
 
-<h1>USEAGE</h1>
+<h1>USAGE</h1>
 
 To run the tool simply open up a command prompt Windows and type in: 'python sopiaSuiteMenu.py' (without quotes)
 
