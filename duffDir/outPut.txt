@@ -1,0 +1,29 @@
+    
+         _.._..,_,_   DDDD    UU   UU  FFFFFF   FFFFFF     
+        (          ) D    DD  UU   UU  FF       FF        
+         ]~,"-.-~~[  D     D  UU   UU  FF       FF         
+       .=])' (;  ([  D     D  UU   UU  FFFFFF   FFFFFF 
+       | ]::\ '    [ D    D   UU   UU  FF       FF      
+       '=]): .)  ([  DDDDD    UUUUUUU  FF       FF       
+         |:: '    |                                          
+          ~~----~~     Duplicate File Finder, SOPIA Suite  
+      
+
+
+
+	MD5 Hash				Filepath
+
+
+6c665091fe1be5283612268d89f4c384 C:\Users\spmcc_000\Desktop\test\file1.txt
+dccaf7bb25ceb8f1a32e5e872dbb46f8 C:\Users\spmcc_000\Desktop\test\file2.txt
+6c665091fe1be5283612268d89f4c384 C:\Users\spmcc_000\Desktop\test\file3.txt
+
+
+Duplicates Files: 
+
+C:\Users\spmcc_000\Desktop\test\file1.txt
+C:\Users\spmcc_000\Desktop\test\file3.txt
+
+Please note: If space above is empty, no duplicates were found.
+
+Thank you for using DuFF, part of SOPIA Suite.
