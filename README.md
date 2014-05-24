@@ -7,11 +7,12 @@ A suite of digital forensic tools written in Python.
 
 SOPIA Suite includes the following:
 
-Duff - Duplicate File Finder
-FiBS - File Investigation Bitesize
-SHIFT - Simon's Hash Info Finder Tool
-SIPHON - SIPHON...
-SPIES - Simon's Portable iPhone Exif-extraction Software
+
+*Duff - Duplicate File Finder
+*FiBS - File Investigation Bitesize
+*SHIFT - Simon's Hash Info Finder Tool
+*SIPHON - SIPHON...
+*SPIES - Simon's Portable iPhone Exif-extraction Software
 
 SIPHON parses a Windows.edb file using Libesedb and then parses the results of that to get thumbcache information.
 
