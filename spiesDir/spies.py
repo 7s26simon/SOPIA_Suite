@@ -204,7 +204,7 @@ try:
 
 		if tkMessageBox.askyesno("SPIES, 2014", "Do you want to locate on Google Maps now?"):
 
-			webbrowser.open('https://maps.google.co.uk/maps?q=' + rippedLatitude + ",-" + rippedLongitude)
+			webbrowser.open("https://maps.google.co.uk/maps?q=%s,-%s" % (finalLatCoordToDecimal,finalLongCoordToDecimal))
 		
 			print a
 			print b
