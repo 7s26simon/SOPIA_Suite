@@ -16,9 +16,6 @@ import hashlib
 import subprocess
 from time import ctime
 
-global spiesDir
-spiesDir = str(os.getcwd())
-
 #######################
 ###    FUNCTIONS    ###
 #######################
@@ -225,7 +222,7 @@ try:
 			print f
 			root.quit()
 
-		with open('spiesOutput.txt', 'w') as txt:
+		with open('spiesDir\spiesOutput.txt', 'w') as txt:
 			txt.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\t\t\t\tS.P.I.E.S\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n' "\nYour scanned image location was: \n\n"  + os.path.normpath(imagefilename))
 			txt.write('\n\nMD5 Hash is: ' + md5Val)
 			txt.write('\n\nCoordinates: \n\nLatitude is: ' + str(declat))
@@ -364,23 +361,92 @@ def readExifFromPhoto(x):
 		metadata.read();
 	#trying to catch the exceptions in case of problem with the GPS data reading
 		try:
-			getMd5 = getFileHashMD5(imagefilename)
+			getFileHashMD5(imagefilename)
 			# getting out the values from the metadata tags, see http://tilloy.net/dev/pyexiv2/tutorial.html#reading-and-writing-exif-tags
-			#allexif = metadata.exif_keys
-			#print allexif
-			# Fixes here by Kieron Craggs - KieronCraggs.com
-			declat = dms_to_decimal(*metadata.__getitem__("Exif.GPSInfo.GPSLatitude").value + [metadata.__getitem__("Exif.GPSInfo.GPSLatitudeRef").value]);
-			declon = dms_to_decimal(*metadata.__getitem__("Exif.GPSInfo.GPSLongitude").value + [metadata.__getitem__("Exif.GPSInfo.GPSLongitudeRef").value]);
-			#print declat
-			#print declon
-			#
+			latitude = metadata.__getitem__("Exif.GPSInfo.GPSLatitude")
+			latitudeRef = metadata.__getitem__("Exif.GPSInfo.GPSLatitudeRef")
+			longitude = metadata.__getitem__("Exif.GPSInfo.GPSLongitude")
+			longitudeRef = metadata.__getitem__("Exif.GPSInfo.GPSLongitudeRef")
+			
+			# get the value of the tag, and make it a float
+			alt = float(metadata.__getitem__("Exif.GPSInfo.GPSAltitude").value)
+
+			# get human readable values
+			latitude = str(latitude).split("=")[1][1:-1].split(" ");
+			latitude = map(lambda f: str(float(Fraction(f))), latitude)
+			latitude = latitude[0] + " " + latitude[1] + " " + latitude[2] + '"' + " " + str(latitudeRef).split("=")[1][1:-1]
+
+			longitude = str(longitude).split("=")[1][1:-1].split(" ");
+			longitude = map(lambda f: str(float(Fraction(f))), longitude)
+			longitude = longitude[0] + " " + longitude[1] + " " + longitude[2] + '"' + " " + str(longitudeRef).split("=")[1][1:-1]
+
 
 			print "\nGPS EXIF data for " + os.path.normpath(imagefilename), "\n" 
-  
-			print "Latitude is:\t" + str(declat) # Gives latitude in standard format
-		
-			print "\n\nLongitude is:\t" + str(declon)
-		
+			# C:\Users\Simon\Desktop\spies.SimonsPortableIphoneExifExtractionSoftware\photo.JPG  (53)
+			# print "Latitude:\t" + latitude,
+			# 53.0 48.54 0.0
+			print "Latitude is:\t" + latitude # Gives latitude in standard format
+
+			rippedLatitude = str(int(float(latitude[0:2]))) + " " + str(latitude[5] + latitude[6] + (latitude[9] + latitude[10:15])) # Take coordinates out using array and turn into string variable
+			
+			print "Longitude is:\t" + longitude
+
+			# In order to work with single digit beginning of longitudes, must be float FIRST then int, then finally string
+			rippedLongitude = str(int(float(longitude[0:2]))) + " " + str(longitude[4] + longitude[5] + longitude[8] + longitude[9:14])
+			
+			print "\n####################"
+			print "#For debugging only#"
+			print "####################"
+			# For Google Maps ONLY
+			print "\nLatitude From Array:\t" + rippedLatitude
+			print "Longitude From Array:\t" + rippedLongitude
+
+			# Turn longitude into digits for Google Earth
+			rippedLatitudeFirstSet = rippedLatitude[0:2]
+			rippedLatitudeSecondSet = rippedLatitude[2:5]
+			rippedLatitudeThirdSet = rippedLatitude[6:11]
+
+			print "\nFirst lat: " + rippedLatitudeFirstSet
+			print "Second lat: " + rippedLatitudeSecondSet
+			print "Third lat: " + rippedLatitudeThirdSet
+
+			# e.g 32.19 in: 53 48 32.19
+			latitudeDegrees = float(rippedLatitudeFirstSet)
+			latitudeMinutes = float(rippedLatitudeSecondSet)
+			latitudeSeconds = float(rippedLatitudeThirdSet)
+
+			global finalLatCoordToDecimalTwo
+
+			# Converted to decimal so can now be sent to KML file
+			finalLatCoordToDecimalTwo = str(latitudeDegrees + ((latitudeMinutes / 60) + (latitudeSeconds/3600)))
+
+			print "\nCalc for GE: " + finalLatCoordToDecimalTwo
+
+			# As above but longitude
+			rippedLongitudeFirstSet = rippedLongitude[0:2]
+			rippedLongitudeSecondSet = rippedLongitude[2:4]
+			rippedLongitudeThirdSet = rippedLongitude[5:9]
+
+			print "\nFirst long: " + rippedLongitudeFirstSet
+			print "Second long: " + rippedLongitudeSecondSet
+			print "Third long: " + rippedLongitudeThirdSet
+
+			# e.g 32.19 in: 53 48 32.19
+			longitudeDegrees = float(rippedLongitudeFirstSet)
+			longitudeMinutes = float(rippedLongitudeSecondSet)
+			longitudeSeconds = float(rippedLongitudeThirdSet)
+
+			global finalLongCoordToDecimalTwo
+
+			# Converted to decimal so can now be sent to KML file
+			finalLongCoordToDecimalTwo = str(longitudeDegrees + ((longitudeMinutes / 60) + (longitudeSeconds/3600)))
+
+			print "\nCalc for GE: " + finalLongCoordToDecimalTwo
+
+			print "####################"
+			print "# End of debugging #"
+			print "####################"
+
 		except Exception, e:  # complain if the GPS reading went wrong, and print the exception
 			print "Missing GPS info for " + imagefilename
 			print e;
@@ -393,13 +459,13 @@ def Quit():
 	sys.exit(1)
 
 def kmzSaveCopyTreeVersionTwo():
+	addPath = str(os.getcwd())
 	global kmzFileLocation
 	#kmzFileLocation = raw_input('\n\nWhere do you wish to save the output files? ')
-	# print 'CURRENT WORKING DIRECTORY\n'
-	# print os.getcwd()
-	addPath = str(os.getcwd())
-	cpFrom = os.path.join(addPath, 'photoEvidence')
 	kmzFileLocation = os.path.join(addPath, 'output')
+	# print 'CURRENT WORKING DIRECTORY\n'
+	# print os.getcwd()	
+	cpFrom = os.path.join(addPath, 'photoEvidence')
 	cpTo = os.path.join(kmzFileLocation, 'files')
 	print ("\nCopying files...")
 	shutil.copytree(cpFrom, cpTo)
@@ -570,8 +636,8 @@ def ripDirectory():
 			print num
 			readExifFromPhoto(os.path.normpath(fileStore[num-1])) # This -1 isn't affecting the num variable outside of this command
 			num = num + 1
-			oneLat.append(declat) #These two lines append the ripped coordinates to the oneLat and oneLong lists
-			oneLong.append(declon) # so all of the photos we ripped are together
+			oneLat.append(finalLatCoordToDecimalTwo) #These two lines append the ripped coordinates to the oneLat and oneLong lists
+			oneLong.append(finalLongCoordToDecimalTwo) # so all of the photos we ripped are together
 			listofHashes.append(md5Val)
 		break
 	kmzSaveCopyTreeVersionTwo()
