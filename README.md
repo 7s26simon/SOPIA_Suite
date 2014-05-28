@@ -31,4 +31,8 @@ To run the tool simply open up a command prompt Windows and type in: 'python sop
 
 <h1>LICENSE INFORMATION</h1>
 
+<<<<<<< HEAD
 Libesedb (third party code) is used in this project (credit given in the source code). Code released under the GNU license.
+=======
+Libesedb (third party code) is used in this project (credit given in the source code). Code released under the GNU license.
+>>>>>>> fae6860163acee045c6c5084f3e170b5997d395d
