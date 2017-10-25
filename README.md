@@ -8,7 +8,7 @@ A suite of digital forensic tools written in Python.
 SOPIA Suite includes the following:
 
 
-*Duff - Duplicate File Finder
+*Puff - Duplicate File Finder
 *FiBS - File Investigation Bitesize
 *SHIFT - Simon's Hash Info Finder Tool
 *SIPHON - SIPHON...
