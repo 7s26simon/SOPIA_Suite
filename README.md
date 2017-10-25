@@ -27,7 +27,7 @@ Pyexiv 2.7
 
 <h1>USAGE</h1>
 
-To run the tool simply open up a command prompt Windows and type in: 'python sopiaSuiteMenu.py' (without quotes)
+To run the tool simply open up a command prompt Windows and type in: 'python sopiaSuiteMenu.py' (without quotes).
 
 <h1>LICENSE INFORMATION</h1>
 
