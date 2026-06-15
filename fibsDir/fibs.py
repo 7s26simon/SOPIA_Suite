@@ -1,243 +1,168 @@
-import os, sys, platform # Platform to detect OS running script
-from os import stat
+#!/usr/bin/env python3
+"""FIBS - File Investigation Bite-Size (part of SOPIA Suite).
+
+Walks a chosen directory and produces an HTML report listing, for every
+file, its name, owner UID, path, size and MD5 / SHA-1 hashes. Optionally
+captures a snapshot of the machine's live processes (Linux / macOS).
+"""
+
+import os
+import sys
+import platform
 from datetime import datetime
-from time import gmtime, strftime
-import shutil
-import time
-import hashlib
-# Importing tkinter GUI
-import Tkinter as tk
-from Tkinter import *
-import tkMessageBox
-import tkFileDialog
+import tkinter as tk
+from tkinter import messagebox, filedialog
 
-#from pwd import getpwuid # works on mac but not windows (offically)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from sopiaCore import get_file_hash_md5, get_file_hash_sha1
 
-#######################
-###    FUNCTIONS    ###
-#######################
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_HTML = os.path.join(BASE_DIR, "output.html")
 
-# Fibs Skull logo printed to shell
-aa =("          _,.-------.,_        ")
-bb =("      ,;~'             '~;,    ")
-cc =("    ,;                     ;,   ")
-dd =("   ;     Welcome to FIBS     ;  ")
-ee =("  ,'   (file investigation    ',")
-ff =(" ,;         bite-size)         ;")
-gg =(" ; ;      .           .      ; ;")
-hh =(" | ;   ______       ______   ; |") 
-ii =(" |  `/~'     ~' . '~     '~\'  |")
-jj =(" |  ~  ,-~~~^~, | ,~^~~~-,  ~  |")
-kk =("  |   | SIMONS}:{  SUITE |   | ") 
-ll =("  |   l SOPIA / | \  2014!   | ")
-mm =("  .~  (__,.--' .^. '--.,__)  ~. ")
-nn =("  |     ---;' / | \ `;---     | ") 
-oo =("   \__.       \/^\/       .__/  ")
-pp =("    V| \                 / |V   ")
-qq =("     | |T~\___!___!___/~T| |    ")
-rr =("     | |`IIII_I_I_I_IIII'| |    ")
-ss =("     |  \,III I I I III,/  |    ")
-tt =("     \    `~~~~~~~~~~'    /     ")
-uu =("        \   .       .   /       ")
-vv =("          \.    ^    ./         ") 
-ww =("            ^~~~^~~~^           ")
-
-def hideWindow():
-		root.withdraw()
-
-def printLogo():
-	print aa
-	print bb
-	print cc
-	print dd
-	print ee
-	print ff
-	print gg
-	print hh
-	print ii
-	print jj
-	print kk
-	print ll
-	print mm
-	print nn
-	print oo
-	print pp
-	print qq
-	print rr
-	print ss
-	print tt
-	print uu
-	print vv
-	print ww
-
-# Sets the size of Tkinter box
-root = Tk()
-root.geometry('255x150+300+100')
-root.title("SPIES, 2014")
-
-def askDirToScan():
-	root = Tk()
-	root.withdraw()
-	global searchAbsolutePath
-	searchAbsolutePath = tkFileDialog.askdirectory()
-	# , "Browse to the directory you wish to search")
-	if searchAbsolutePath == "": 
-		tkMessageBox.showinfo("FIBS, 2014", "\n\nThank you for using Fibs! Goodbye!\n")
-		sys.exit(0)
+LOGO = r"""
+          _,.-------.,_
+      ,;~'             '~;,
+    ,;                     ;,
+   ;     Welcome to FIBS     ;
+  ,'   (file investigation    ',
+ ,;         bite-size)         ;
+ ; ;      .           .      ; ;
+ | ;   ______       ______   ; |
+ |  `/~'     ~' . '~     '~\'  |
+ |  ~  ,-~~~^~, | ,~^~~~-,  ~  |
+  |   | SIMONS}:{  SUITE |   |
+  |   l SOPIA / | \  2014!   |
+  .~  (__,.--' .^. '--.,__)  ~.
+  |     ---;' / | \ `;---     |
+   \__.       \/^\/       .__/
+    V| \                 / |V
+     | |T~\___!___!___/~T| |
+     | |`IIII_I_I_I_IIII'| |
+     |  \,III I I I III,/  |
+     \    `~~~~~~~~~~'    /
+        \   .       .   /
+          \.    ^    ./
+            ^~~~^~~~^
+"""
 
 
-FILESIZE_SLICING_LIMIT = 5000000 #bytes - 4.76837mb
+def capture_live_processes(root):
+    """Offer to capture a snapshot of running processes (non-Windows)."""
+    if not messagebox.askyesno(
+        "FIBS, 2014", "Do you want to capture live processes of this machine?"
+    ):
+        return
+
+    with os.popen("ps -Af") as proc:
+        process_output = proc.read()
+    captured_at = datetime.now()
+
+    location = filedialog.asksaveasfilename(
+        parent=root,
+        filetypes=[("html", "*.html")],
+        title="Save the file as...",
+    )
+    if not location:
+        return
+
+    with open(location, "w") as f:
+        f.write(
+            "Below is a list of processes captured live at the following "
+            "date + time: " + str(captured_at) + "\n\n"
+        )
+        f.write(process_output)
+        f.write("\n\n\nThank you for using FIBS!\nFIBS is part of SOPIA Suite, 2014.")
 
 
+def main():
+    print(LOGO)
+
+    root = tk.Tk()
+    root.geometry("255x150+300+100")
+    root.title("FIBS, 2014")
+    root.withdraw()
+
+    print("Detecting OS...")
+    os_type = platform.system()
+    print("OS Detected: " + os_type)
+
+    # Live-process capture is only meaningful on Unix-like systems.
+    if os_type != "Windows":
+        capture_live_processes(root)
+        if not messagebox.askyesno(
+            "FIBS, 2014", "Do you wish to continue using FIBS?"
+        ):
+            messagebox.showinfo("FIBS, 2014", "\n\nThank you for using FIBS! Goodbye!\n")
+            sys.exit(0)
+
+    search_dir = filedialog.askdirectory()
+    if not search_dir:
+        messagebox.showinfo("FIBS, 2014", "\n\nThank you for using FIBS! Goodbye!\n")
+        sys.exit(0)
+
+    print("\n\nFolder Selected: " + os.path.normpath(search_dir))
+
+    start = datetime.now()
+    file_id = 1000
+
+    with open(OUTPUT_HTML, "w") as f:
+        f.write("<html> \n\n")
+        f.write('\n<img src="./logo/fibsLogo.png" alt="logo"> <br>')
+        f.write(
+            "\n\n\nYou searched the following directory: \n"
+            + os.path.normpath(search_dir)
+            + "\n\n\n"
+        )
+        f.write("<br><br>Results for custom search: \n\n\n")
+
+        for dirname, _dirnames, filenames in os.walk(search_dir):
+            for filename in filenames:
+                path_name = os.path.join(dirname, filename)
+                md5_val = get_file_hash_md5(path_name)
+                sha_val = get_file_hash_sha1(path_name)
+                file_stat = os.stat(path_name)
+
+                f.write("<p>")
+                f.write("<br>FIBS File Identifier: %d" % file_id)
+                f.write("<br>\n%d File Name: %s" % (file_id, filename))
+                f.write("<br>\n%d UID: %s\n" % (file_id, file_stat.st_uid))
+                f.write(
+                    "<br>%d Enclosing Directory: %s\n"
+                    % (file_id, os.path.normpath(path_name))
+                )
+                f.write("<br>%d Size in Bytes: %d\n\n" % (file_id, file_stat.st_size))
+                f.write("<br>%d File Hash (MD5): %s" % (file_id, md5_val))
+                f.write("<br>%d File Hash (SHA1): %s" % (file_id, sha_val))
+                f.write("</p>")
+                file_id += 1
+
+        f.write("\n\n</html>")
+
+    finished = datetime.now()
+    difference = finished - start
+    print("Difference is: " + str(difference))
+
+    messagebox.showinfo(
+        "FIBS, 2014",
+        "\t\tFinished Processing Data\n\n\tStarted processing data at: "
+        + str(start)
+        + "\n\nFind results at: \n\n"
+        + str(OUTPUT_HTML)
+        + "\n\n\n\tTime taken to scan directory: (H,M,S,MS) "
+        + str(difference),
+    )
+
+    with open(OUTPUT_HTML, "a") as f:
+        f.write("FIBS Stats: ")
+        f.write("Started processing data at: " + str(start))
+        f.write("<br>Finished processing data at: " + str(finished))
+        f.write("<br>Total time taken to scan directory: (H,M,S,MS) " + str(difference))
+        f.write("<br><br>Thank you for using FIBS!")
+
+    print("\n\nResults saved at following location: " + OUTPUT_HTML)
+    print("\n\nThank you for using FIBS")
+    messagebox.showinfo("FIBS, 2014", "Thank you for using FIBS, Goodbye!")
 
 
-def getFileHashMD5(filename):
-     retval = 0;
-     filesize = os.path.getsize(filename)
-    
-     if filesize > FILESIZE_SLICING_LIMIT:
-        with open(filename, 'rb') as fh:
-          m = hashlib.md5()
-          while True:
-            data = fh.read(8192)
-            if not data:
-                break
-            m.update(data)
-          retval = m.hexdigest()
-        
-     else:
-     	global md5Val
-        md5Val = hashlib.md5(open(filename, 'rb').read()).hexdigest()
-
-def getFileHashSHA1(filename):
-     retval = 0;
-     filesize = os.path.getsize(filename)
-    
-     if filesize > FILESIZE_SLICING_LIMIT:
-        with open(filename, 'rb') as fh:
-          m = hashlib.sha1()
-          while True:
-            data = fh.read(8192)
-            if not data:
-                break
-            m.update(data)
-          shaVal = m.hexdigest()
-        
-     else:
-     	 global shaVal
-         shaVal = hashlib.sha1(open(filename, 'rb').read()).hexdigest()
-
-
-
-########################
-### END OF FUNCTIONS ###
-########################
-
-printLogo()
-hideWindow()
-
-num = 1000
-#Detect OS
-print "Detecting OS..."
-osType = platform.system()
-print "OS Detected: " + osType
-
-# Ask user if they want to capture live processes of machine (Linux & Mac only)
-fileExts = [('html','*.html')]
-if osType == 'Windows':
-    pass
-elif osType == 'Darwin' or 'Linux':
-	if tkMessageBox.askyesno("FIBS, 2014", "Do you want to capture live processes of this machine?"):
-		processOutput = (os.popen("ps -Af").read())
-		capProcessesTime = datetime.now() # Assign current timestamp to a variable to be used later
-		#Prompt user where to save results in .txt format ONLY
-		processesHTMLLocation = tkFileDialog.asksaveasfilename(parent=root,filetypes=fileExts ,title="Save the file as...")
-		with open(processesHTMLLocation,'w') as f:
-			        f.write('Below is a list of processes captured live at the following date + time: '+ str(capProcessesTime) + "\n\n")
-			        f.write(processOutput)
-			        f.write('\n\n\nThank you for using Fibs!\nFibs is part of Sopia Suite, 2014.')
-			        f.close()
-			        if tkMessageBox.askyesno("FIBS, 2014", "Do you wish to continue using FIBS?"):
-			            pass
-			        else:
-			            tkMessageBox.showinfo("FIBS, 2014", "\n\nThank you for using Fibs! Goodbye!\n")
-			            sys.exit(0)
-	elif tkMessageBox.askyesno("FIBS, 2014", "Do you wish to continue using FIBS?"):
-		pass
-	else:
-		tkMessageBox.showinfo("FIBS, 2014", "\n\nThank you for using Fibs! Goodbye!\n")
-		sys.exit(0)
-
-
-# tkMessageBox.showinfo("FIBS, 2014", "Browse to the directory you wish to search e.g C:\Users\Simon\Desktop")
-# searchAbsolutePath = tkFileDialog.askdirectory()
-
-askDirToScan()
-
-print "\n\nFolder Selected: " + os.path.normpath(searchAbsolutePath)
-hideWindow()
-
-
-saveFileLocation = os.getcwd()
-print saveFileLocation
-
-# The following just ensures the output is stored in correct place
-if osType == 'Windows':
-	resultsHTMLLocation = saveFileLocation + '\\fibsDir\output.html'
-elif osType == 'Darwin' or 'Linux':
-	resultsHTMLLocation = saveFileLocation + '/fibsDir/output.html'
-
-start = datetime.now()
-
-# Create html file in location user input into the previous window
-with open(resultsHTMLLocation,'w') as f:
-    f.write('<html> \n\n')
-    f.write('\n<img src="./logo/fibsLogo.png" alt="logo"> <br>')
-    f.write('\n\n\nYou searched the following directory: \n' + os.path.normpath(searchAbsolutePath) + '\n\n\n')
-    f.write('<br><br>Results for custom search: \n\n\n')
-    for root, dirs, files in os.walk(searchAbsolutePath):
-        for file in files:
-            pathName = os.path.join(root,file)
-            getFileHashMD5(pathName)
-            getFileHashSHA1(pathName)
-            #print pathName
-            #print os.path.getsize(pathName)
-            #print stat(searchAbsolutePath).st_uid
-            #print getpwuid(stat(searchAbsolutePath).st_uid).pw_name # Only works on Mac
-
-            f.write('<p>')
-            f.write('<br>Fibs File Identifier: %d' % (num))
-            f.write('<br>\n%d File Name: ' % num + file)
-            #f.write('\nFile Owner: {}'.format(getpwuid(stat(searchAbsolutePath).st_uid).pw_name)) #Only works on Mac
-            # IMPORTANT !!!! Was getting error on Linux CentOS (python v2.6, should work fine on Python v2.7.3) regarding 
-            # "zero length field name in format". Added 0 in between line 201,202,203 {}
-            f.write('<br>\n%d UID: {0} \n'.format(stat(searchAbsolutePath).st_uid)% num)
-            f.write('<br>%d Enclosing Directory: {0}\n'.format(os.path.normpath(pathName))% num)
-            f.write('<br>%d Size in Bytes: {0}\n\n'.format(os.path.getsize(pathName))% num)
-            f.write('<br>%d File Hash (MD5): {0}'.format(md5Val)% num)
-            f.write('<br>%d File Hash (SHA1): {0}'.format(shaVal)% num)
-            f.write('</p>')
-            num += 1 # Increments unique file ID. += means add right operand onto left operand. Increment +1
-    
-    f.write('\n\n</html>')
-    f.close() #Close file
-
-# finishWrite = datetime.now()
-finishWrite = datetime.now()
-
-difference = finishWrite - start
-print "Difference is: " + str(difference)
-formattedDifference = str(difference)
-tkMessageBox.showinfo("FIBS, 2014", "\t\tFinished Processing Data" + "\n\n\tStarted processing data at: " +str(start) + "\n\nFind results at: " + "\n\n" + str(resultsHTMLLocation) + "\n\n\n\tTime taken to scan directory: (H,M,S,MS) " + str(formattedDifference))
-
-# 'a' is to append
-with open(resultsHTMLLocation,'a') as f:
-    f.write("FiBs Stats: ") 
-    f.write("Started processing data at: " +str(start))
-    f.write("<br>Finished processing data at: " +str(finishWrite))
-    f.write("<br>Total time taken to scan directory: (H,M,S,MS) " +(formattedDifference))
-    f.write("<br><br>Thank you for using Fibs!")
-    f.close()
-print "\n\nResults saved at following location: " + resultsHTMLLocation
-print "\n\nThank you for using FIBS"
-tkMessageBox.showinfo("FIBS, 2014", "Thank you for using FIBS, Goodbye!")
+if __name__ == "__main__":
+    main()

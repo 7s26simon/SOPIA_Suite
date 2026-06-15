@@ -1,73 +1,93 @@
-from Tkinter import *
-import Tkinter
-import subprocess
+#!/usr/bin/env python3
+"""SOPIA Suite launcher menu.
+
+Presents a small Tkinter window that lets the user launch any of the
+SOPIA Suite tools. Each tool runs as a separate Python process.
+"""
+
 import os
 import sys
+import subprocess
+import tkinter as tk
+from tkinter import messagebox
 
-root = Tkinter.Tk()
-root.title("SopiaSuite, 2014")
-root.geometry('255x255+550+220')
-text = Text(root)
-text.insert(INSERT, "Please select which tool\nyou wish to use...")
+# Directory this script lives in, so the tools can be found regardless
+# of the current working directory or operating system.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def kill_window():
-	root.destroy()
 
-def callDuff():
-    proc = subprocess.Popen("python duffDir\duff.py")
-    kill_window()
+def launch(*path_parts):
+    """Launch a tool in a new process using the same Python interpreter."""
+    script = os.path.join(BASE_DIR, *path_parts)
+    proc = subprocess.Popen([sys.executable, script])
+    root.destroy()
     proc.wait()
 
-def callFibs():
-	proc = subprocess.Popen("python fibsDir\\fibs.py")
-	kill_window()
-	proc.wait()
 
-def callShift():
-	proc = subprocess.Popen("python shiftDir\shift.py")
-	kill_window()
-	proc.wait()
+def call_duff():
+    launch("duffDir", "duff.py")
 
-def callSpies():
-	proc = subprocess.Popen("python spiesDir\spies.py")
-	kill_window()
-	proc.wait()
 
-def callSiphon():
-	print ("\nSIPHON is only compatible with Linux (Ubuntu)\nPlease run manually on Ubuntu.\n")
+def call_fibs():
+    launch("fibsDir", "fibs.py")
 
-def callTrap():
-	proc = subprocess.Popen("python trapDir\\trap.py")
-	kill_window()
-	proc.wait()
 
-def callHelp():
-	print "\nLaunching help files..."
-	os.chdir("helpFiles")
-	print os.getcwd()
-	proc = subprocess.Popen("hh.exe sopiaChm.chm")
-	os.getcwd()
-	os.chdir("../")
-	os.getcwd()
+def call_shift():
+    launch("shiftDir", "shift.py")
 
-def callExit():
-	print ("\nThank you for using SOPIA Suite\n\tGoodbye!\n")
-	sys.exit(0)
 
-buttonOne = Tkinter.Button(root, text ="DUFF", relief=FLAT, command=callDuff)
-buttonTwo = Tkinter.Button(root, text ="FIBS", relief=FLAT, command=callFibs)
-buttonThree = Tkinter.Button(root, text ="SHIFT", relief=FLAT, command=callShift)
-buttonFour = Tkinter.Button(root, text ="SPIES", relief=FLAT, command=callSpies)
-buttonFive = Tkinter.Button(root, text ="SIPHON", relief=FLAT, command=callSiphon)
-buttonSix = Tkinter.Button(root, text ="HELP FILES", relief=FLAT, command=callHelp)
-buttonSeven = Tkinter.Button(root, text ="EXIT", relief=FLAT, command=callExit)
+def call_spies():
+    launch("spiesDir", "spies.py")
 
-buttonOne.pack()
-buttonTwo.pack()
-buttonThree.pack()
-buttonFour.pack()
-buttonFive.pack()
-buttonSix.pack()
-buttonSeven.pack()
+
+def call_siphon():
+    messagebox.showinfo(
+        "SIPHON",
+        "SIPHON is only compatible with Linux (Ubuntu).\n"
+        "Please run it manually on Ubuntu.",
+    )
+
+
+def call_help():
+    """Open the bundled CHM help file (Windows only)."""
+    help_dir = os.path.join(BASE_DIR, "HelpFiles")
+    chm = os.path.join(help_dir, "sopiaChm.chm")
+    if not os.path.exists(chm):
+        messagebox.showinfo("Help", "Help file could not be found.")
+        return
+    try:
+        subprocess.Popen(["hh.exe", chm])
+    except OSError:
+        messagebox.showinfo(
+            "Help", "Help files can only be opened on Windows (hh.exe)."
+        )
+
+
+def call_exit():
+    print("\nThank you for using SOPIA Suite\n\tGoodbye!\n")
+    root.destroy()
+    sys.exit(0)
+
+
+root = tk.Tk()
+root.title("SOPIA Suite, 2014")
+root.geometry("255x255+550+220")
+
+text = tk.Text(root)
+text.insert(tk.INSERT, "Please select which tool\nyou wish to use...")
+
+buttons = [
+    ("DUFF", call_duff),
+    ("FIBS", call_fibs),
+    ("SHIFT", call_shift),
+    ("SPIES", call_spies),
+    ("SIPHON", call_siphon),
+    ("HELP FILES", call_help),
+    ("EXIT", call_exit),
+]
+
+for label, command in buttons:
+    tk.Button(root, text=label, relief=tk.FLAT, command=command).pack()
+
 text.pack()
 root.mainloop()

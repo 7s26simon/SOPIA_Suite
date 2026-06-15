@@ -1,151 +1,150 @@
-import subprocess, csv, stat, shutil, time
-import os, sys, platform # Detect OS
-# Importing tkinter GUI
-import Tkinter as tk
-from Tkinter import *
-import tkMessageBox
-import tkFileDialog
+#!/usr/bin/env python3
+"""SIPHON (part of SOPIA Suite).
 
-def closeWindow():
-  root.withdraw()
+Parses a Windows.edb file using libesedb, then searches the exported
+SystemIndex for a given thumbcache ID and reports the original file's
+location and type. Linux (Ubuntu) only.
+"""
 
-# Logo
+import os
+import sys
+import csv
+import shutil
+import platform
+import subprocess
+import contextlib
+import tkinter as tk
+from tkinter import filedialog
 
-siphonLogo = '''
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-                               [===============-o___
-                               ||              (____)
-                               ||              |    |
-                            ~  ||              | o  |
-                            __ ||              |    |
-                            || ||              |    |
-                          .-||-||-.            |   o| 
-                         _\_______/_===========|o   |
-                          )\_____/(            |~~~~|
-                         /     ||  \           |    |
-                        /      ||   \          | ~  |
-                       /       ||    \         |  ~ |
-                      /~~~~~~~~~~~~~~~\        |~   |
-                     /  SIPHON ::      \       |  ~ |
-                    (    SOPIA :: SUITE )      |~   |
-                     `-----------------'       |____|
+SIPHON_LOGO = r"""
 
-                     '''
+                           [===============-o___
+                           ||              (____)
+                           ||              |    |
+                        ~  ||              | o  |
+                        __ ||              |    |
+                        || ||              |    |
+                      .-||-||-.            |   o|
+                     _\_______/_===========|o   |
+                      )\_____/(            |~~~~|
+                     /     ||  \           |    |
+                    /      ||   \          | ~  |
+                   /       ||    \         |  ~ |
+                  /~~~~~~~~~~~~~~~\        |~   |
+                 /  SIPHON ::      \       |  ~ |
+                (    SOPIA :: SUITE )      |~   |
+                 `-----------------'       |____|
 
-# Sets the size of Tkinter box
-root = Tk()
-root.geometry('255x150+300+100')
-root.title("SIPHON, 2014")
-# Text when opening program
-text = Text(root)
-text.insert(INSERT, "Please browse to libesedb-20120102 folder...")
-text.pack()
+                 """
 
 
-class cd:
-    """Context manager for changing the current working directory"""
-    def __init__(self, newPath):
-        self.newPath = newPath
-
-    def __enter__(self):
-        self.savedPath = os.getcwd()
-        os.chdir(self.newPath)
-
-    def __exit__(self, etype, value, traceback):
-        os.chdir(self.savedPath)
+@contextlib.contextmanager
+def change_dir(new_path):
+    """Temporarily change the working directory."""
+    saved_path = os.getcwd()
+    os.chdir(new_path)
+    try:
+        yield
+    finally:
+        os.chdir(saved_path)
 
 
+def main():
+    root = tk.Tk()
+    root.geometry("255x150+300+100")
+    root.title("SIPHON, 2014")
+    root.withdraw()
 
-closeWindow()
-print siphonLogo
-osType = platform.system()
-print ("You are using: " + osType + ("\n\nNote: SIPHON is only supported on Ubuntu.\nFor further Information, please consult\nthe help files that came with SopiaSuite."))
-if osType == ('Linux'):
-    pass
-elif osType == ('Windows') or ('Darwin'):
-  print ("Sorry, SIPHON is only compatible with Linux. For more details, please see\nthe help files.")
-  sys.exit(1)
+    print(SIPHON_LOGO)
 
-print ("\n")
-thumbcacheID = raw_input("Please enter thumbcacheID you\nwish to search the database for: ")
-# b014618486f9299e
+    os_type = platform.system()
+    print(
+        "You are using: "
+        + os_type
+        + "\n\nNote: SIPHON is only supported on Ubuntu.\nFor further information, "
+        "please consult\nthe help files that came with SOPIA Suite."
+    )
+    if os_type != "Linux":
+        print(
+            "Sorry, SIPHON is only compatible with Linux. For more details, "
+            "please see\nthe help files."
+        )
+        sys.exit(1)
 
-print ("\nPlease browse to libesedb-20120102/esedbtools directory")
+    thumbcache_id = input(
+        "\nPlease enter the thumbcacheID you\nwish to search the database for: "
+    )
 
-cwd = os.getcwd()
+    cwd = os.getcwd()
+    esedb_tools_location = os.path.join(cwd, "libesedb-20120102", "esedbtools")
+    windows_edb_location = os.path.join(cwd, "evidence", "Windows.edb")
 
-esedbToolsLocation = (cwd + '/libesedb-20120102/esedbtools')
+    print(esedb_tools_location + "     ESE TOOLS LOCATION\n")
+    print(windows_edb_location + "     WINDOWS EDB FILE LOCATION")
 
-print ("\nPlease browse to Windows.edb file")
+    with change_dir(esedb_tools_location):
+        print("\nSIPHON has navigated to:")
+        subprocess.call(["pwd"])
+        subprocess.call(["ls"])
+        # On Ubuntu the export tool is invoked as ./esedbexport
+        subprocess.call(
+            ["sudo", "./esedbexport", "-m", "-t", windows_edb_location]
+        )
 
-windowsEdbLocation = (cwd + '/evidence/Windows.edb')
+    export_location = filedialog.askdirectory()
+    if not export_location:
+        sys.exit(1)
 
-print esedbToolsLocation  + "     ESE TOOLS LOCATION\n"
-print windowsEdbLocation  + "     WINDOWS EDB FILE LOCATION"
+    sys_index_file = None
+    for dirpath, _dirnames, filenames in os.walk(export_location):
+        for filename in filenames:
+            if "SystemIndex_0A" in filename:
+                sys_index_file = os.path.join(dirpath, filename)
+                break
 
-# enter libesedb directory:
-with cd(esedbToolsLocation):
-   print ("\nSIPHON has navigated to:")
-   subprocess.call("pwd")
-   print ("\n")
-   subprocess.call("ls")
-   print ("\n")
-   print ("\nSIPHON has navigated to esedbToolsFolder:")
-   subprocess.call("pwd")
-   # if on Ubuntu, must be: ./esedbexport 
-   subprocess.call("sudo " + "./esedbexport -m -t " + windowsEdbLocation, shell=True)
+    if not sys_index_file:
+        print("Could not find a SystemIndex_0A file in the export folder.")
+        sys.exit(1)
 
-   # print "\nEdbTools Export Location: " + esedbToolsLocation + "/Windows.edb.export"
-   # print ("\n")
+    # Work on a local copy of the (large) index file.
+    local_index = os.path.join(BASE_DIR, "SystemIndex_0A")
+    shutil.copyfile(sys_index_file, local_index)
 
-edbExportLocation = tkFileDialog.askdirectory()
+    csv.register_dialect(
+        "MyDialect",
+        delimiter="\t",
+        doublequote=False,
+        quotechar="",
+        lineterminator="\n",
+        escapechar="",
+        quoting=csv.QUOTE_NONE,
+    )
 
-filesInExportFolder = []
+    with open(local_index, "r", newline="") as csvfile:
+        sys_index = csv.reader(csvfile, "MyDialect")
+        headers = next(sys_index, None)
 
-for root, dirs, files in os.walk(edbExportLocation):
-    for file in files:
-        if 'SystemIndex_0A' in file:
-            filesInExportFolder.append(os.path.join(root, file))
-            sysIndexVariable = ''.join(filesInExportFolder)
+        for row in sys_index:
+            if thumbcache_id in row:
+                save_file_as = input("Where do you wish to save the file?: ")
+                with open(save_file_as, "w", newline="") as out:
+                    writer = csv.writer(out)
+                    writer.writerows(zip(headers, row))
 
-# copy file from esedbtools/Windows.edb.export folder to desktop (big(ish) file)
-shutil.copyfile(sysIndexVariable, "/home/si/Desktop/SystemIndex_0A")
+                print("\n\nThumbcache_ID found. Please see output in SIPHON.csv")
+                print("\n\nReport:")
+                real_system_item_url = row[31].replace("\\\\", "\\")
+                print("Location of original file:", real_system_item_url)
+                print("File Type:", row[253])
+                print(
+                    "Information taken from System_ItemUrl and "
+                    "System_FileExtension headers.\n"
+                )
 
-csv.register_dialect('MyDialect', delimiter='\t',doublequote=False,quotechar='',lineterminator='\n',escapechar='',quoting=csv.QUOTE_NONE)
-# End of adapted code
+    print("\nThank you for using SIPHON...\n")
 
-with open('/home/si/Desktop/SystemIndex_0A', 'rU') as csvfile:
-    SysIndex = csv.reader(csvfile, 'MyDialect')
 
-    headers = next(SysIndex, None)  
-
-    for row in SysIndex:
-    	if thumbcacheID in row:
-
-            zip(headers, row)
-            saveFileAs = raw_input('Where do you wish to save the file?: ')
-            writer = csv.writer(open(saveFileAs, "w"))
-            writer.writerows(zip(headers, row))
-            print ("\n\nThumbcache_ID found. Please see output in SIPHON.csv")
-            print ("\n\nReport:")
-            a = row[31]
-            realSystemItemUrl = a.replace('\\\\', "\\")
-            # print "Your searched thumbcacheID: " + thumbcacheID
-            print ("Location of original file:"), realSystemItemUrl
-            fileType = row[253]
-            print ("File Type:"), fileType
-            print ("Information taken from System_ItemUrl and System_FileExtension Headers.\n")
-csvfile.close()
-
-# can remove desktop file if you want by uncommenting the line below
-# os.remove("/home/si/Desktop/SystemIndex_0A")
-
-print ("\nThank you for using SIPHON...\n")
-
-#########################################
-#######DEBUGGING SECTION BELOW###########
-######################################### 
-
-# New EDB: 
-# 631278677cd4d2e3
-# b014618486f9299e
+if __name__ == "__main__":
+    main()

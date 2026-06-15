@@ -16,23 +16,19 @@ SOPIA Suite includes the following:
 
 SIPHON parses a Windows.edb file using Libesedb and then parses the results of that to get thumbcache information.
 
-<h1>DEPENDANCIES</h1>
+<h1>DEPENDENCIES</h1>
 
 SOPIA Suite has a number of dependencies which need to be met before usage:
 
-Python 2.7 (Add C:\Python27 to 'PATH' in the Environmental Variables tab on Windows to get Python working the command line).
-libesedb (Built from source)
-tkinter
-Pyexiv 2.7
+Python 3 (ensure `python3` is on your PATH).
+libesedb (built from source; SIPHON only, Linux/Ubuntu).
+tkinter (bundled with most Python 3 installs).
+Pillow (`pip install Pillow`; used by SPIES for EXIF GPS extraction).
 
 <h1>USAGE</h1>
 
-To run the tool simply open up a command prompt Windows and type in: 'python sopiaSuiteMenu.py' (without quotes)
+To run the tool, open a terminal and type: `python3 sopiaSuiteMenu.py`
 
 <h1>LICENSE INFORMATION</h1>
 
-<<<<<<< HEAD
 Libesedb (third party code) is used in this project (credit given in the source code). Code released under the GNU license.
-=======
-Libesedb (third party code) is used in this project (credit given in the source code). Code released under the GNU license.
->>>>>>> fae6860163acee045c6c5084f3e170b5997d395d
